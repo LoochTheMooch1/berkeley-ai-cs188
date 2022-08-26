@@ -18,6 +18,12 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
+from game import Directions
+n = Directions.NORTH
+s = Directions.SOUTH
+e = Directions.EAST
+w = Directions.WEST
+
 
 class SearchProblem:
     """
@@ -70,7 +76,8 @@ def tinyMazeSearch(problem):
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s, s, w, s, w, w, s, w]
+    return [s, s, w, s, w, w, s, w]
+
 
 def depthFirstSearch(problem):
     """
@@ -87,17 +94,58 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    stack = util.Stack()
+    explored = set()
+    start = problem.getStartState()
+    explored.add(start)
+    stack.push((start, []))
+
+    while not stack.isEmpty():
+        v = stack.pop()
+        if problem.isGoalState(v[0]):
+            return v[1]
+        for ss in problem.getSuccessors(v[0]):
+            if ss[0] not in explored:
+                explored.add(ss[0])
+                stack.push((ss[0], v[1] + [ss[1]]))
+
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    queue = util.Queue()
+    explored = set()
+    start = problem.getStartState()
+    explored.add(start)
+    queue.push((start, []))
+
+    while not queue.isEmpty():
+        v = queue.pop()
+        if problem.isGoalState(v[0]):
+            return v[1]
+        for ss in problem.getSuccessors(v[0]):
+            if ss[0] not in explored:
+                explored.add(ss[0])
+                queue.push((ss[0], v[1] + [ss[1]]))
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    queue = util.PriorityQueue()
+    explored = set()
+    start = problem.getStartState()
+    explored.add(start)
+    queue.push((start, [], 0), 0)
+
+    while not queue.isEmpty():
+        v = queue.pop()
+        if problem.isGoalState(v[0]):
+            return v[1]
+        for ss in problem.getSuccessors(v[0]):
+            if ss[0] not in explored:
+                cost = v[2] + ss[2]
+                explored.add(ss[0])
+                queue.push((ss[0], v[1] + [ss[1]], cost), cost)
 
 def nullHeuristic(state, problem=None):
     """
@@ -109,7 +157,21 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    queue = util.PriorityQueue()
+    explored = set()
+    start = problem.getStartState()
+    explored.add(start)
+    queue.push((start, [], 0), 0)
+
+    while not queue.isEmpty():
+        v = queue.pop()
+        if problem.isGoalState(v[0]):
+            return v[1]
+        for ss in problem.getSuccessors(v[0]):
+            if ss[0] not in explored:
+                cost = v[2] + ss[2] + heuristic(ss[0], problem)
+                explored.add(ss[0])
+                queue.push((ss[0], v[1] + [ss[1]], cost), cost)
 
 
 # Abbreviations

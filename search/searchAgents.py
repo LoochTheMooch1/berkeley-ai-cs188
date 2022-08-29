@@ -295,14 +295,14 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return (self.startingPosition, frozenset())
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return len(state[1]) == 4
 
     def getSuccessors(self, state):
         """
@@ -319,12 +319,23 @@ class CornersProblem(search.SearchProblem):
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
             # Here's a code snippet for figuring out whether a new position hits a wall:
-            #   x,y = currentPosition
-            #   dx, dy = Actions.directionToVector(action)
-            #   nextx, nexty = int(x + dx), int(y + dy)
-            #   hitsWall = self.walls[nextx][nexty]
+            x,y = state[0]
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
+            next = (nextx, nexty)
+            if not hitsWall:
+                if next in self.corners and next not in state[1]:
+                    newset = set()
+                    newset.add(next)
+                    for i in state[1]:
+                        newset.add(i)
+                    newset = frozenset(newset)
+                    successors.append(((next, newset), action, 1))
+                else:
+                    successors.append(((next, state[1]), action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -356,11 +367,47 @@ def cornersHeuristic(state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
-    corners = problem.corners # These are the corner coordinates
+    corners = [] # These are the corner coordinates
+    for corner in problem.corners:
+        corners.append(corner)
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    def dist(pos1, pos2):
+        wallcount = 0
+        xrange = []
+        yrange = []
+        if pos1[0] > pos2[0]:
+            xrange = list(range(pos2[0], pos1[0] + 1))
+        else:
+            xrange = list(range(pos1[0], pos2[0] + 1))
+        if pos1[1] > pos2[1]:
+            yrange = list(range(pos2[1], pos1[1] + 1))
+        else:
+            yrange = list(range(pos1[1], pos2[1] + 1))
+        for x in xrange:
+            for y in yrange:
+                if walls[x][y]:
+                    wallcount += 1
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]) - wallcount
+
+    for corner in corners:
+        if corner in state[1]:
+            corners.remove(corner)
+    path = [(state[0], 0)]
+    while len(corners) > 0:
+        path.append(((), float("inf")))
+        for corner in corners:
+            heuristic = dist(path[-2][0], corner)
+            if path[-1][1] > heuristic:
+                path[-1] = (corner, heuristic)
+        corners.remove(path[-1][0])
+    total = 0
+    for pt in path:
+        total += pt[1]
+
+    return total
+
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"

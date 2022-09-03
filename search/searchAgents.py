@@ -367,44 +367,33 @@ def cornersHeuristic(state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
-    corners = [] # These are the corner coordinates
-    for corner in problem.corners:
-        corners.append(corner)
+    corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
+    if problem.isGoalState(state):
+        return 0
     def dist(pos1, pos2):
-        wallcount = 0
-        xrange = []
-        yrange = []
-        if pos1[0] > pos2[0]:
-            xrange = list(range(pos2[0], pos1[0] + 1))
-        else:
-            xrange = list(range(pos1[0], pos2[0] + 1))
-        if pos1[1] > pos2[1]:
-            yrange = list(range(pos2[1], pos1[1] + 1))
-        else:
-            yrange = list(range(pos1[1], pos2[1] + 1))
-        for x in xrange:
-            for y in yrange:
-                if walls[x][y]:
-                    wallcount += 1
-        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]) - wallcount
-
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+    remainder = set()
     for corner in corners:
-        if corner in state[1]:
-            corners.remove(corner)
-    path = [(state[0], 0)]
-    while len(corners) > 0:
-        path.append(((), float("inf")))
-        for corner in corners:
-            heuristic = dist(path[-2][0], corner)
-            if path[-1][1] > heuristic:
-                path[-1] = (corner, heuristic)
-        corners.remove(path[-1][0])
+        if corner not in state[1]:
+            remainder.add(corner)
     total = 0
-    for pt in path:
-        total += pt[1]
+    current = state[0]
+    while len(remainder) > 0:
+        plus = float("inf")
+        newcorner = None
+        for corner in remainder:
+            cdist = dist(current, corner)
+            if cdist < plus:
+                plus = cdist
+                newcorner = corner
+        total += plus
+        current = newcorner
+        remainder.remove(current)
+    if total is float("inf"):
+        return 0
 
     return total
 
@@ -501,7 +490,13 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    def dist(pos1, pos2):
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+    foodset = set(foodGrid.asList())
+    total = 0
+    for food in foodset:
+        total = max(total, dist(position, food))
+    return total
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -532,7 +527,7 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return search.breadthFirstSearch(AnyFoodSearchProblem(gameState))
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -568,7 +563,7 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.food[x][y]
 
 def mazeDistance(point1, point2, gameState):
     """
